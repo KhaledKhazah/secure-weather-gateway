@@ -2,35 +2,57 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Secure Weather Gateway</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <title>
+        Secure Weather Gateway
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
 <header>
 
     <div>
+
         <p class="eyebrow">
             NETWORK SECURITY MONITOR
         </p>
 
-        <h1>Secure Weather Gateway</h1>
+        <h1>
+            Secure Weather Gateway
+        </h1>
 
         <p class="subtitle">
             HMAC-SHA256 protected UDP sensor monitoring
         </p>
+
     </div>
 
+
     <div class="status">
-        <span class="status-dot"></span>
+
+        <span
+            class="status-dot"
+        ></span>
+
         <span id="system-status">
             Online
         </span>
+
     </div>
 
 </header>
@@ -38,13 +60,16 @@
 
 <main>
 
+
     <!-- Statistics -->
 
     <section class="stats-grid">
 
+
         <div class="stat-card">
+
             <p class="stat-label">
-                Active Sensors
+                Verified Sensors
             </p>
 
             <p
@@ -53,10 +78,12 @@
             >
                 0
             </p>
+
         </div>
 
 
         <div class="stat-card">
+
             <p class="stat-label">
                 Valid Packets
             </p>
@@ -67,10 +94,12 @@
             >
                 0
             </p>
+
         </div>
 
 
         <div class="stat-card">
+
             <p class="stat-label">
                 Blocked Packets
             </p>
@@ -81,10 +110,12 @@
             >
                 0
             </p>
+
         </div>
 
 
         <div class="stat-card">
+
             <p class="stat-label">
                 Latest Sequence
             </p>
@@ -95,6 +126,7 @@
             >
                 -
             </p>
+
         </div>
 
     </section>
@@ -107,12 +139,17 @@
         <div class="panel-header">
 
             <div>
+
                 <p class="eyebrow">
                     LIVE DATA
                 </p>
 
-                <h2>Sensors</h2>
+                <h2>
+                    Sensors
+                </h2>
+
             </div>
+
 
             <span class="live-indicator">
                 ● Live
@@ -135,18 +172,29 @@
     </section>
 
 
-    <!-- Security events -->
+    <!-- Security monitor -->
 
-    <section class="panel security-panel">
+    <section
+        class="panel security-panel"
+    >
 
         <div class="panel-header">
 
             <div>
-                <p class="eyebrow security-eyebrow">
+
+                <p
+                    class="
+                        eyebrow
+                        security-eyebrow
+                    "
+                >
                     SECURITY MONITOR
                 </p>
 
-                <h2>Security Events</h2>
+                <h2>
+                    Security Events
+                </h2>
+
             </div>
 
         </div>
@@ -162,10 +210,12 @@
 
     </section>
 
+
 </main>
 
 
 <script src="app.js"></script>
 
 </body>
+
 </html>

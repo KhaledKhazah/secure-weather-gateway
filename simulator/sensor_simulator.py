@@ -255,8 +255,7 @@ def main(
 
     if bad_actor_count > sensor_count:
         raise ValueError(
-            "Bad actor count cannot be greater "
-            "than sensor count."
+            "Bad actor count cannot be greater than sensor count."
         )
 
     stop_event = threading.Event()
@@ -264,42 +263,27 @@ def main(
     threads = []
 
     first_bad_actor_uid = (
-        sensor_count
-        - bad_actor_count
+        sensor_count - bad_actor_count
     )
 
     print()
-    print(
-        "Secure Weather Sensor Simulator"
-    )
-
-    print(
-        f"Sensors: {sensor_count}"
-    )
-
-    print(
-        f"Bad actors: {bad_actor_count}"
-    )
-
+    print("Secure Weather Sensor Simulator")
+    print(f"Sensors: {sensor_count}")
+    print(f"Bad actors: {bad_actor_count}")
     print(
         f"Destination: "
-        f"{destination_ip}:"
-        f"{destination_port}"
+        f"{destination_ip}:{destination_port}"
     )
-
     print()
 
-    for uid in range(
-        sensor_count
-    ):
+    for uid in range(sensor_count):
+
         source_port = (
-            base_source_port
-            + uid
+            base_source_port + uid
         )
 
         bad_actor = (
-            uid
-            >= first_bad_actor_uid
+            uid >= first_bad_actor_uid
         )
 
         thread = threading.Thread(
@@ -314,32 +298,28 @@ def main(
                 interval,
                 bad_actor,
                 stop_event
-            )
+            ),
+            daemon=True
         )
 
-        threads.append(
-            thread
-        )
+        threads.append(thread)
 
         thread.start()
 
     try:
-        for thread in threads:
-            thread.join()
+        while True:
+            time.sleep(1)
 
     except KeyboardInterrupt:
-        print(
-            "\nStopping all sensors..."
-        )
+        print("\nStopping all sensors...")
 
+    finally:
         stop_event.set()
 
         for thread in threads:
-            thread.join()
+            thread.join(timeout=2)
 
-        print(
-            "All sensors stopped."
-        )
+        print("All sensors stopped.")
 
 
 if __name__ == "__main__":

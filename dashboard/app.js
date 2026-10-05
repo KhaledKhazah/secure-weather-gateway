@@ -3,36 +3,46 @@ const sensorContainer =
         "sensor-container"
     );
 
+
 const securityEventsContainer =
     document.getElementById(
         "security-events"
     );
+
 
 const sensorCount =
     document.getElementById(
         "sensor-count"
     );
 
+
 const validPackets =
     document.getElementById(
         "valid-packets"
     );
+
 
 const blockedPackets =
     document.getElementById(
         "blocked-packets"
     );
 
+
 const latestSequence =
     document.getElementById(
         "latest-sequence"
     );
+
 
 const systemStatus =
     document.getElementById(
         "system-status"
     );
 
+
+// =================================
+// STATUS
+// =================================
 
 async function loadStatus() {
 
@@ -42,6 +52,7 @@ async function loadStatus() {
             await fetch(
                 "/api/status"
             );
+
 
         const data =
             await response.json();
@@ -69,6 +80,7 @@ async function loadStatus() {
         systemStatus.textContent =
             "Offline";
 
+
         console.error(
             "Could not load status:",
             error
@@ -76,6 +88,10 @@ async function loadStatus() {
     }
 }
 
+
+// =================================
+// SENSOR DATA
+// =================================
 
 async function loadSensors() {
 
@@ -86,11 +102,14 @@ async function loadSensors() {
                 "/api/sensors"
             );
 
+
         const sensors =
             await response.json();
 
 
-        if (sensors.length === 0) {
+        if (
+            sensors.length === 0
+        ) {
 
             sensorContainer.innerHTML =
                 `
@@ -99,8 +118,10 @@ async function loadSensors() {
                 </p>
                 `;
 
+
             latestSequence.textContent =
                 "-";
+
 
             return;
         }
@@ -211,13 +232,13 @@ async function loadSensors() {
                     <span class="sensor-status">
                         HMAC VERIFIED
                     </span>
+
                 `;
 
 
                 sensorContainer.appendChild(
                     card
                 );
-
             }
         );
 
@@ -237,6 +258,10 @@ async function loadSensors() {
 }
 
 
+// =================================
+// SECURITY EVENTS
+// =================================
+
 async function loadSecurityEvents() {
 
     try {
@@ -251,7 +276,9 @@ async function loadSecurityEvents() {
             await response.json();
 
 
-        if (events.length === 0) {
+        if (
+            events.length === 0
+        ) {
 
             securityEventsContainer.innerHTML =
                 `
@@ -259,6 +286,7 @@ async function loadSecurityEvents() {
                     No security events detected.
                 </p>
                 `;
+
 
             return;
         }
@@ -271,23 +299,61 @@ async function loadSecurityEvents() {
         events.forEach(
             event => {
 
+
                 const eventElement =
                     document.createElement(
                         "div"
                     );
 
 
-                eventElement.className =
-                    "security-event";
+                const isVerified =
+                    (
+                        event.type
+                        === "hmac_verified"
+                    );
+
+
+                if (isVerified) {
+
+                    eventElement.className =
+                        (
+                            "security-event "
+                            + "verified-event"
+                        );
+
+                }
+
+                else {
+
+                    eventElement.className =
+                        (
+                            "security-event "
+                            + "blocked-event"
+                        );
+                }
 
 
                 eventElement.innerHTML = `
 
                     <div>
 
-                        <p class="event-title">
-                            ⚠ INVALID HMAC
+                        <p class="
+                            event-title
+                            ${
+                                isVerified
+                                    ? "verified-title"
+                                    : "blocked-title"
+                            }
+                        ">
+
+                            ${
+                                isVerified
+                                    ? "✓ HMAC VERIFIED"
+                                    : "⚠ INVALID HMAC"
+                            }
+
                         </p>
+
 
                         <p class="event-details">
 
@@ -304,15 +370,29 @@ async function loadSecurityEvents() {
                     </div>
 
 
-                    <span class="blocked-badge">
-                        BLOCKED
+                    <span class="
+                        ${
+                            isVerified
+                                ? "verified-badge"
+                                : "blocked-badge"
+                        }
+                    ">
+
+                        ${
+                            isVerified
+                                ? "VERIFIED"
+                                : "BLOCKED"
+                        }
+
                     </span>
+
                 `;
 
 
-                securityEventsContainer.appendChild(
-                    eventElement
-                );
+                securityEventsContainer
+                    .appendChild(
+                        eventElement
+                    );
 
             }
         );
@@ -329,6 +409,10 @@ async function loadSecurityEvents() {
 }
 
 
+// =================================
+// DASHBOARD UPDATE
+// =================================
+
 async function updateDashboard() {
 
     await Promise.all([
@@ -336,7 +420,6 @@ async function updateDashboard() {
         loadSensors(),
         loadSecurityEvents()
     ]);
-
 }
 
 

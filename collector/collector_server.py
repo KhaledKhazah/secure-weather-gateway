@@ -18,9 +18,9 @@ DATA_FORMAT = "!HIfffI"
 DATA_SIZE = 22
 
 
-# --------------------------------
+# =================================
 # Shared application data
-# --------------------------------
+# =================================
 
 sensor_data = {}
 
@@ -29,19 +29,17 @@ statistics = {
     "blocked_packets": 0
 }
 
-# Keep only the latest 20 events
+# Store only the latest 20 events
 security_events = deque(
     maxlen=20
 )
 
-# Protect shared data
-# between multiple threads
 data_lock = threading.Lock()
 
 
-# --------------------------------
+# =================================
 # Dashboard directory
-# --------------------------------
+# =================================
 
 BASE_DIR = (
     Path(__file__)
@@ -59,11 +57,13 @@ app = Flask(__name__)
 
 
 # =================================
-# UDP SENSOR COLLECTOR
+# VALID SENSOR DATA COLLECTOR
 # =================================
 
-def udp_collector(ip, port):
-
+def udp_collector(
+    ip,
+    port
+):
     sock = socket.socket(
         socket.AF_INET,
         socket.SOCK_DGRAM
@@ -135,8 +135,6 @@ def udp_collector(ip, port):
                     source_port
             }
 
-            # Store current sensor state
-            # and update statistics
             with data_lock:
 
                 sensor_data[uid] = sensor
@@ -155,6 +153,7 @@ def udp_collector(ip, port):
             )
 
     except KeyboardInterrupt:
+
         print(
             "\nUDP Collector stopped"
         )
@@ -171,7 +170,6 @@ def security_event_collector(
     ip,
     port
 ):
-
     sock = socket.socket(
         socket.AF_INET,
         socket.SOCK_DGRAM
@@ -194,9 +192,7 @@ def security_event_collector(
             )
 
             try:
-                # bytes
-                # → string
-                # → Python dictionary
+
                 event = json.loads(
                     data.decode(
                         "utf-8"
@@ -215,23 +211,62 @@ def security_event_collector(
 
                 continue
 
+
+            event_type = event.get(
+                "type"
+            )
+
+
             with data_lock:
 
-                statistics[
-                    "blocked_packets"
-                ] += 1
+                # Only invalid HMAC packets
+                # increase the blocked counter.
+                if (
+                    event_type
+                    == "invalid_hmac"
+                ):
+
+                    statistics[
+                        "blocked_packets"
+                    ] += 1
 
                 security_events.appendleft(
                     event
                 )
 
-            print(
-                f"[BLOCKED] "
-                f"UID={event.get('uid')} "
-                f"SEQ="
-                f"{event.get('sequence_number')} "
-                f"REASON=INVALID_HMAC"
-            )
+
+            if (
+                event_type
+                == "invalid_hmac"
+            ):
+
+                print(
+                    f"[BLOCKED] "
+                    f"UID={event.get('uid')} "
+                    f"SEQ="
+                    f"{event.get('sequence_number')} "
+                    f"REASON=INVALID_HMAC"
+                )
+
+            elif (
+                event_type
+                == "hmac_verified"
+            ):
+
+                print(
+                    f"[VERIFIED] "
+                    f"UID={event.get('uid')} "
+                    f"SEQ="
+                    f"{event.get('sequence_number')} "
+                    f"HMAC=VALID"
+                )
+
+            else:
+
+                print(
+                    "[WARNING] "
+                    "Unknown security event type"
+                )
 
     except KeyboardInterrupt:
 
@@ -255,6 +290,7 @@ def security_event_collector(
 def get_sensors():
 
     with data_lock:
+
         sensors = list(
             sensor_data.values()
         )
@@ -271,6 +307,7 @@ def get_sensors():
 def get_security_events():
 
     with data_lock:
+
         events = list(
             security_events
         )
@@ -374,10 +411,12 @@ def main(
     # Valid sensor packets
     udp_thread = threading.Thread(
         target=udp_collector,
+
         args=(
             udp_ip,
             udp_port
         ),
+
         daemon=True
     )
 
@@ -388,10 +427,12 @@ def main(
     # Security events
     event_thread = threading.Thread(
         target=security_event_collector,
+
         args=(
             udp_ip,
             event_port
         ),
+
         daemon=True
     )
 
@@ -431,8 +472,9 @@ if __name__ == "__main__":
         "--udp-port",
         type=int,
         default=4811,
+
         help=(
-            "Port for valid "
+            "Port for verified "
             "sensor packets"
         )
     )
@@ -441,8 +483,10 @@ if __name__ == "__main__":
         "--event-port",
         type=int,
         default=4812,
+
         help=(
-            "Port for security events"
+            "Port for "
+            "security events"
         )
     )
 

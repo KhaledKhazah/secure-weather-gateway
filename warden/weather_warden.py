@@ -9,6 +9,11 @@ from Cryptodome.Hash import SHA256
 
 BLOCKSIZE = 32
 
+DATA_FORMAT = "!HIfffI"
+DATA_SIZE = 22
+HMAC_SIZE = 32
+PACKET_SIZE = DATA_SIZE + HMAC_SIZE
+
 
 def create_pad_keys(key):
     assert len(key) == BLOCKSIZE
@@ -29,6 +34,42 @@ def create_pad_keys(key):
     return o_key, i_key
 
 
+def create_event(
+    event_type,
+    uid,
+    sequence_number,
+    temperature,
+    humidity,
+    wind_speed,
+    source_port
+):
+    return {
+        "type": event_type,
+        "uid": uid,
+        "sequence_number": sequence_number,
+        "temperature": round(temperature, 2),
+        "humidity": round(humidity, 2),
+        "wind_speed": round(wind_speed, 2),
+        "source_port": source_port
+    }
+
+
+def send_event(
+    sock,
+    event,
+    ip,
+    event_port
+):
+    event_data = json.dumps(
+        event
+    ).encode("utf-8")
+
+    sock.sendto(
+        event_data,
+        (ip, event_port)
+    )
+
+
 def main(
     ip,
     port_in,
@@ -37,25 +78,25 @@ def main(
     event_port,
     key
 ):
-    key_byte = key.encode("utf-8")
+    key_bytes = key.encode("utf-8")
 
-    if len(key_byte) > BLOCKSIZE:
+    if len(key_bytes) > BLOCKSIZE:
         derived_key = SHA256.new(
-            key_byte
+            key_bytes
         ).digest()
 
     else:
         derived_key = (
-            key_byte
+            key_bytes
             + b"\x00"
-            * (BLOCKSIZE - len(key_byte))
+            * (BLOCKSIZE - len(key_bytes))
         )
 
     o_key, i_key = create_pad_keys(
         derived_key
     )
 
-    # Socket for incoming sensor packets
+    # Receives packets from sensors
     socket_in = socket.socket(
         socket.AF_INET,
         socket.SOCK_DGRAM
@@ -65,7 +106,8 @@ def main(
         (ip, port_in)
     )
 
-    # Socket for outgoing packets
+    # Sends packets to collector
+    # and security events
     socket_out = socket.socket(
         socket.AF_INET,
         socket.SOCK_DGRAM
@@ -75,46 +117,46 @@ def main(
         (ip, port_out)
     )
 
-    data_size = 22
-    hmac_size = 32
-    packet_size = data_size + hmac_size
-
     print(
         f"Warden listening on "
         f"{ip}:{port_in}"
     )
 
     print(
-        f"Valid packets → "
+        f"Valid packets -> "
         f"{ip}:{port_serv}"
     )
 
     print(
-        f"Security events → "
+        f"Security events -> "
         f"{ip}:{event_port}"
     )
 
     try:
         while True:
+
             packet, addr = socket_in.recvfrom(
                 2048
             )
 
-            if len(packet) < packet_size:
+            if len(packet) < PACKET_SIZE:
                 print(
                     "[WARNING] Packet too small"
                 )
                 continue
 
-            # Split sensor data and HMAC
-            data_rec = packet[:data_size]
+            # First 22 bytes:
+            # actual sensor data
+            data_rec = packet[:DATA_SIZE]
 
+            # Next 32 bytes:
+            # received HMAC
             hmac_rec = packet[
-                data_size:
-                data_size + hmac_size
+                DATA_SIZE:
+                DATA_SIZE + HMAC_SIZE
             ]
 
-            # Calculate HMAC ourselves
+            # Calculate the HMAC ourselves
             h_inner = SHA256.new(
                 i_key + data_rec
             )
@@ -125,91 +167,96 @@ def main(
 
             hmac_cal = h_outer.digest()
 
-            # Decode sensor data
             (
                 uid,
-                seq_num,
-                temp,
-                hum,
+                sequence_number,
+                temperature,
+                humidity,
                 wind_speed,
-                port
+                source_port
             ) = struct.unpack(
-                "!HIfffI",
+                DATA_FORMAT,
                 data_rec
             )
 
-            # -------------------------
+            # =================================
             # VALID HMAC
-            # -------------------------
+            # =================================
 
             if hmac_rec == hmac_cal:
 
                 print(
                     f"[VALID] "
                     f"UID={uid} "
-                    f"SEQ={seq_num} "
-                    f"TEMP={temp:.2f}°C "
-                    f"HUM={hum:.2f}% "
+                    f"SEQ={sequence_number} "
+                    f"TEMP={temperature:.2f}°C "
+                    f"HUM={humidity:.2f}% "
                     f"WIND={wind_speed:.2f}km/h "
-                    f"PORT={port}"
+                    f"PORT={source_port}"
                 )
 
-                # Forward only the sensor data.
-                # The collector does not need the HMAC.
+                # Forward valid sensor data
                 socket_out.sendto(
                     data_rec,
                     (ip, port_serv)
                 )
 
-            # -------------------------
+                # Create green security event
+                event = create_event(
+                    "hmac_verified",
+                    uid,
+                    sequence_number,
+                    temperature,
+                    humidity,
+                    wind_speed,
+                    source_port
+                )
+
+                send_event(
+                    socket_out,
+                    event,
+                    ip,
+                    event_port
+                )
+
+            # =================================
             # INVALID HMAC
-            # -------------------------
+            # =================================
 
             else:
+
                 print(
                     f"[WARNING] "
                     f"Value integrity compromised: "
                     f"UID={uid} "
-                    f"SEQ={seq_num} "
-                    f"TEMP={temp:.2f}°C "
-                    f"HUM={hum:.2f}% "
+                    f"SEQ={sequence_number} "
+                    f"TEMP={temperature:.2f}°C "
+                    f"HUM={humidity:.2f}% "
                     f"WIND={wind_speed:.2f}km/h "
-                    f"PORT={port}"
+                    f"PORT={source_port}"
                 )
 
-                # Create security event
-                event = {
-                    "type": "invalid_hmac",
-                    "uid": uid,
-                    "sequence_number": seq_num,
-                    "temperature": round(
-                        temp,
-                        2
-                    ),
-                    "humidity": round(
-                        hum,
-                        2
-                    ),
-                    "wind_speed": round(
-                        wind_speed,
-                        2
-                    ),
-                    "source_port": port
-                }
-
-                # Python dictionary
-                # → JSON string
-                # → bytes
-                event_data = json.dumps(
-                    event
-                ).encode("utf-8")
-
-                # Send security event
-                # to the collector
-                socket_out.sendto(
-                    event_data,
-                    (ip, event_port)
+                # Create red security event
+                event = create_event(
+                    "invalid_hmac",
+                    uid,
+                    sequence_number,
+                    temperature,
+                    humidity,
+                    wind_speed,
+                    source_port
                 )
+
+                send_event(
+                    socket_out,
+                    event,
+                    ip,
+                    event_port
+                )
+
+                # Important:
+                # Invalid sensor data is NOT
+                # forwarded to the collector.
 
     except KeyboardInterrupt:
         print(
@@ -240,28 +287,40 @@ if __name__ == "__main__":
         "--port_in",
         default=4711,
         type=int,
-        help="Port for incoming sensor packets"
+        help=(
+            "Port for incoming "
+            "sensor packets"
+        )
     )
 
     parser.add_argument(
         "--port_out",
         default=4810,
         type=int,
-        help="Source port for outgoing packets"
+        help=(
+            "Source port for "
+            "outgoing packets"
+        )
     )
 
     parser.add_argument(
         "--port_serv",
         default=4811,
         type=int,
-        help="Collector port for valid packets"
+        help=(
+            "Collector port for "
+            "verified sensor data"
+        )
     )
 
     parser.add_argument(
         "--event_port",
         default=4812,
         type=int,
-        help="Collector port for security events"
+        help=(
+            "Collector port for "
+            "security events"
+        )
     )
 
     parser.add_argument(
