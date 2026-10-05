@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,69 +12,160 @@
 
 <body>
 
-    <header>
-        <div>
-            <p class="eyebrow">NETWORK SECURITY MONITOR</p>
-            <h1>Secure Weather Gateway</h1>
-            <p class="subtitle">
-                HMAC-SHA256 protected UDP sensor monitoring
+<header>
+
+    <div>
+        <p class="eyebrow">
+            NETWORK SECURITY MONITOR
+        </p>
+
+        <h1>Secure Weather Gateway</h1>
+
+        <p class="subtitle">
+            HMAC-SHA256 protected UDP sensor monitoring
+        </p>
+    </div>
+
+    <div class="status">
+        <span class="status-dot"></span>
+        <span id="system-status">
+            Online
+        </span>
+    </div>
+
+</header>
+
+
+<main>
+
+    <!-- Statistics -->
+
+    <section class="stats-grid">
+
+        <div class="stat-card">
+            <p class="stat-label">
+                Active Sensors
+            </p>
+
+            <p
+                class="stat-value"
+                id="sensor-count"
+            >
+                0
             </p>
         </div>
 
-        <div class="status">
-            <span class="status-dot"></span>
-            <span id="system-status">Online</span>
+
+        <div class="stat-card">
+            <p class="stat-label">
+                Valid Packets
+            </p>
+
+            <p
+                class="stat-value valid-value"
+                id="valid-packets"
+            >
+                0
+            </p>
         </div>
-    </header>
-
-    <main>
-
-        <section class="stats-grid">
-
-            <div class="stat-card">
-                <p class="stat-label">Active Sensors</p>
-                <p class="stat-value" id="sensor-count">0</p>
-            </div>
-
-            <div class="stat-card">
-                <p class="stat-label">Latest Sequence</p>
-                <p class="stat-value" id="latest-sequence">-</p>
-            </div>
-
-            <div class="stat-card">
-                <p class="stat-label">Security</p>
-                <p class="stat-value security-value">HMAC</p>
-            </div>
-
-        </section>
 
 
-        <section class="panel">
+        <div class="stat-card">
+            <p class="stat-label">
+                Blocked Packets
+            </p>
 
-            <div class="panel-header">
-                <div>
-                    <p class="eyebrow">LIVE DATA</p>
-                    <h2>Sensors</h2>
-                </div>
+            <p
+                class="stat-value blocked-value"
+                id="blocked-packets"
+            >
+                0
+            </p>
+        </div>
 
-                <span class="live-indicator">
-                    ● Live
-                </span>
-            </div>
 
-            <div id="sensor-container" class="sensor-grid">
+        <div class="stat-card">
+            <p class="stat-label">
+                Latest Sequence
+            </p>
 
-                <p class="empty-message">
-                    Waiting for sensor data...
+            <p
+                class="stat-value"
+                id="latest-sequence"
+            >
+                -
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- Sensor data -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <div>
+                <p class="eyebrow">
+                    LIVE DATA
                 </p>
 
+                <h2>Sensors</h2>
             </div>
 
-        </section>
+            <span class="live-indicator">
+                ● Live
+            </span>
 
-    </main>
+        </div>
 
-    <script src="app.js"></script>
+
+        <div
+            id="sensor-container"
+            class="sensor-grid"
+        >
+
+            <p class="empty-message">
+                Waiting for sensor data...
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Security events -->
+
+    <section class="panel security-panel">
+
+        <div class="panel-header">
+
+            <div>
+                <p class="eyebrow security-eyebrow">
+                    SECURITY MONITOR
+                </p>
+
+                <h2>Security Events</h2>
+            </div>
+
+        </div>
+
+
+        <div id="security-events">
+
+            <p class="empty-message">
+                No security events detected.
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script src="app.js"></script>
 
 </body>
 </html>
