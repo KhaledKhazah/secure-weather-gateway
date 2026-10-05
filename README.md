@@ -2,6 +2,8 @@
 
 A network security project that validates UDP sensor data using HMAC and SHA-256 and visualizes the results in a live web dashboard.
 
+The original weather warden was developed as part of a university IT and Network Security exercise.  
+The project was later extended with a custom multi-sensor simulator, collector backend, REST API and live security dashboard.
 
 ---
 
@@ -27,7 +29,7 @@ Valid packets are forwarded to the collector, while packets with an invalid HMAC
 
 ## Architecture
 
-
+```text
                      UDP + HMAC
 Sensor Simulator --------------------+
                                       |
@@ -57,7 +59,7 @@ Sensor Simulator --------------------+
                             +------------------+
                             |  Web Dashboard   |
                             +------------------+
-
+```
 
 ---
 
@@ -113,6 +115,35 @@ Sensor Simulator --------------------+
 
 ---
 
+## Project Structure
+
+```text
+secure-weather-gateway/
+│
+├── collector/
+│   └── collector_server.py
+│
+├── dashboard/
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+│
+├── simulator/
+│   └── sensor_simulator.py
+│
+├── warden/
+│   └── weather_warden.py
+│
+├── screenshots/
+│   └── dashboard.png
+│
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
+
+---
+
 ## Live Dashboard
 
 The dashboard displays verified sensor data and security events in real time.
@@ -129,37 +160,37 @@ Red events represent manipulated packets that failed integrity verification and 
 
 ### 1. Clone the repository
 
-
+```bash
 git clone https://github.com/KhaledKhazah/secure-weather-gateway.git
 cd secure-weather-gateway
-
+```
 
 ### 2. Create a virtual environment
 
 Windows:
 
-
+```powershell
 python -m venv .venv
-
+```
 
 Activate it:
 
-
+```powershell
 .\.venv\Scripts\Activate.ps1
-
+```
 
 Linux:
 
-
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-
+```
 
 ### 3. Install dependencies
 
-
+```bash
 python -m pip install -r requirements.txt
-
+```
 
 ---
 
@@ -169,41 +200,41 @@ The project uses three components.
 
 ### 1. Start the Collector and Web API
 
-
+```bash
 python collector/collector_server.py
-
+```
 
 The dashboard will be available at:
 
-
+```text
 http://127.0.0.1:8000
-
+```
 
 ### 2. Start the Security Warden
 
 Open another terminal:
 
-
+```bash
 python warden/weather_warden.py
-
+```
 
 ### 3. Start the Sensor Simulator
 
 For example, start five sensors with two simulated bad actors:
 
-
+```bash
 python simulator/sensor_simulator.py --sensors 5 --bad-actors 2
-
+```
 
 This creates:
 
-
+```text
 Sensor 0 -> VERIFIED
 Sensor 1 -> VERIFIED
 Sensor 2 -> VERIFIED
 Sensor 3 -> BAD ACTOR
 Sensor 4 -> BAD ACTOR
-
+```
 
 ---
 
@@ -213,17 +244,17 @@ The collector provides several API endpoints.
 
 ### Sensor data
 
-
+```text
 GET /api/sensors
-
+```
 
 Returns the latest verified data for each sensor.
 
 ### System status
 
-
+```text
 GET /api/status
-
+```
 
 Returns statistics including:
 
@@ -233,9 +264,9 @@ Returns statistics including:
 
 ### Security events
 
-
+```text
 GET /api/security-events
-
+```
 
 Returns the latest HMAC verification and blocking events.
 
@@ -247,13 +278,13 @@ For every incoming sensor packet, the Security Warden separates the sensor data 
 
 It calculates the expected HMAC and compares both values.
 
-
+```text
 Received HMAC == Calculated HMAC
             |
             +---- YES ---> VERIFIED ---> Forward packet
             |
             +---- NO ----> BLOCKED ----> Security event
-
+```
 
 Manipulated sensor data is never forwarded to the normal collector.
 
