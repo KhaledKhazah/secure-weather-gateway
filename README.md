@@ -148,7 +148,7 @@ secure-weather-gateway/
 
 The dashboard displays verified sensor data and security events in real time.
 
-![Secure Weather Gateway Dashboard](screenshots/dashboard.png)
+![Secure Weather Gateway Dashboard](scdirreenshots/Dashboard.png)
 
 Green events represent successfully verified HMAC values.
 
